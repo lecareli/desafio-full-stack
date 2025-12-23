@@ -35,7 +35,7 @@ class ErrorLog extends Model
     protected $casts = [
         'level'         => ErrorLevelEnum::class,
         'context'       => 'array',
-        'created_by'    => 'datetime'
+        'created_at'    => 'datetime'
     ];
 
     public function actorUser(): BelongsTo
