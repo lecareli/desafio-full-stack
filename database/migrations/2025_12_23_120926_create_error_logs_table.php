@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('error_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('actor_user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignUuid('actor_user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->string('level');
             $table->text('message');
             $table->string('exception_class')->nullable();
