@@ -12,7 +12,7 @@
             </p>
 
             <div style="margin-top: 14px;">
-                <a href="#" class="text">Ir para carteira (em breve)</a>
+                <a href="{{ route('wallet.index') }}" class="text">Ir para carteira</a>
             </div>
         </section>
 

@@ -114,12 +114,55 @@
         }
 
         a {
-            color: #a8a8ff;                                                                                                             
+            color: #a8a8ff;
             text-decoration: none;
         }
 
         a:hover {
             text-decoration: underline;
+        }
+
+        /* Inputs bonitos (igual guest) */
+        .field {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #d6d6dd;
+        }
+
+        input,
+        select,
+        textarea {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #2a2a2f;
+            background: #0f0f12;
+            color: #fff;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #5b5bf7;
+            box-shadow: 0 0 0 3px rgba(91, 91, 247, .15);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #7f7f8a;
+        }
+
+        .input-error {
+            border-color: #ff667a !important;
+            box-shadow: 0 0 0 3px rgba(255, 102, 122, .12) !important;
         }
     </style>
 </head>
