@@ -29,15 +29,14 @@ class AuthController extends Controller
         $this->service->register($request->validated());
         $request->session()->regenerate();
 
-        return redirect()->route('');
+        return redirect()->route('home');
     }
 
     public function login(LoginRequest $request)
     {
         $data = $request->validated();
 
-        try
-        {
+        try {
             $this->service->login(
                 $data['email'],
                 $data['password']
@@ -45,16 +44,12 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->intended(route(''));
-        }
-        catch(AuthenticationException $e)
-        {
+            return redirect()->intended(route('home'));
+        } catch (AuthenticationException $e) {
             return back()
                 ->withErrors(['email' => $e->getMessage()])
                 ->onlyInput('email');
-        }
-        catch(Throwable $e)
-        {
+        } catch (Throwable $e) {
             return back()
                 ->withErrors(['email' => 'Não foi possivel realizar o login'])
                 ->onlyInput('email');
