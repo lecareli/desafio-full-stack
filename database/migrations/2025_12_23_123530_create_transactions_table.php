@@ -12,7 +12,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('from_wallet_id')->nullable()->constrained('wallets');
             $table->foreignUuid('to_wallet_id')->nullable()->constrained('wallets');
-            $table->foreignUuid('reversal_of_id')->nullable()->constrained('transactions');
+            $table->foreignUuid('reversal_of_id')->nullable();
             $table->foreignUuid('created_by')->nullable()->constrained('users');
             $table->string('type');
             $table->string('status')->default('POSTED');
@@ -21,6 +21,10 @@ return new class extends Migration
             $table->jsonb('meta')->nullable();
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->foreign('reversal_of_id')->references('id')->on('transactions');
         });
     }
 
