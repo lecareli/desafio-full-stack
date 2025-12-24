@@ -31,41 +31,48 @@
         </div>
     @endif
 
-    <div style="margin-top: 14px;">
-        <div class="grid">
-            {{-- Saldo --}}
-            <section class="card">
-                <h1 class="title">Minha carteira</h1>
-                <p class="text">Veja seu saldo e realize movimentações.</p>
+    <div style="margin-top: 14px; display:flex; flex-direction:column; gap:14px;">
 
-                <div
-                    style="margin-top: 14px; padding: 14px; border-radius: 14px; border: 1px solid #2a2a2f; background:#0f0f12;">
-                    <div class="text" style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
-                        <span>Saldo atual</span>
+        {{-- BLOCO HORIZONTAL: MINHA CARTEIRA --}}
+        <section class="card"
+            style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+            <div style="min-width: 240px;">
+                <h1 class="title" style="margin:0;">Minha carteira</h1>
+                <p class="text" style="margin:6px 0 0;">Veja seu saldo e realize movimentações.</p>
+            </div>
 
-                        <strong style="font-size: 18px; color:#fff;">
-                            {{ $walletCurrency ?? 'BRL' }}
-                            {{ number_format(($walletBalanceCents ?? 0) / 100, 2, ',', '.') }}
-                        </strong>
-                    </div>
+            <div
+                style="flex:1; min-width: 280px; padding: 14px; border-radius: 14px; border: 1px solid #2a2a2f; background:#0f0f12;">
+                <div class="text" style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
+                    <span>Saldo atual</span>
 
-                    <div class="text" style="margin-top: 8px; font-size: 12px;">
-                        Atualizado em: {{ $walletUpdatedAt ?? '—' }}
-                    </div>
+                    <strong style="font-size: 20px; color:#fff;">
+                        {{ $walletCurrency ?? 'BRL' }}
+                        {{ number_format(($walletBalanceCents ?? 0) / 100, 2, ',', '.') }}
+                    </strong>
                 </div>
 
-                <div style="margin-top: 12px;" class="text">
-                    Dica: todas as operações ficam registradas no seu extrato.
+                <div class="text" style="margin-top: 8px; font-size: 12px;">
+                    Atualizado em: {{ $walletUpdatedAt ?? '—' }}
                 </div>
-            </section>
+            </div>
+        </section>
 
-            {{-- Ações: Depósito e Transferência --}}
-            <aside class="card">
-                <h2 class="title">Movimentações</h2>
+        {{-- BLOCO HORIZONTAL: MOVIMENTAÇÕES --}}
+        <section class="card">
+            <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <h2 class="title" style="margin:0;">Movimentações</h2>
+                    <p class="text" style="margin:6px 0 0;">Deposite, transfira ou retire saldo.</p>
+                </div>
+            </div>
 
+            {{-- Cards lado a lado --}}
+            <div style="margin-top: 14px; display:flex; gap:14px; flex-wrap:wrap;">
                 {{-- Depósito --}}
-                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #2a2a2f;">
-                    <h3 style="margin:0 0 8px; font-size: 14px; font-weight: 800;">Depósito</h3>
+                <div
+                    style="flex:1; min-width: 260px; padding:14px; border-radius:14px; border:1px solid #2a2a2f; background:#0f0f12;">
+                    <h3 style="margin:0 0 10px; font-size: 14px; font-weight: 800;">Depósito</h3>
 
                     <form method="POST" action="{{ route('wallet.deposit') }}">
                         @csrf
@@ -73,7 +80,7 @@
                         <div class="field">
                             <label for="deposit_amount">Valor (R$)</label>
                             <input id="deposit_amount" name="amount" type="text" inputmode="decimal"
-                                placeholder="Ex: 150,00" value="{{ old('amount') }}">
+                                placeholder="Ex: 150,00" value="{{ old('amount') }}" style="width:100%;">
                             <div class="text" style="font-size: 12px; margin-top: 6px;">
                                 O valor será somado ao seu saldo.
                             </div>
@@ -84,8 +91,9 @@
                 </div>
 
                 {{-- Transferência --}}
-                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed #2a2a2f;">
-                    <h3 style="margin:0 0 8px; font-size: 14px; font-weight: 800;">Transferência</h3>
+                <div
+                    style="flex:1; min-width: 260px; padding:14px; border-radius:14px; border:1px solid #2a2a2f; background:#0f0f12;">
+                    <h3 style="margin:0 0 10px; font-size: 14px; font-weight: 800;">Transferência</h3>
 
                     <form method="POST" action="{{ route('wallet.transfer') }}">
                         @csrf
@@ -93,13 +101,13 @@
                         <div class="field">
                             <label for="to_email">E-mail do destinatário</label>
                             <input id="to_email" name="to_email" type="email" autocomplete="email"
-                                placeholder="destinatario@exemplo.com" value="{{ old('to_email') }}">
+                                placeholder="destinatario@exemplo.com" value="{{ old('to_email') }}" style="width:100%;">
                         </div>
 
                         <div class="field">
                             <label for="transfer_amount">Valor (R$)</label>
                             <input id="transfer_amount" name="amount" type="text" inputmode="decimal"
-                                placeholder="Ex: 50,00" value="{{ old('amount') }}">
+                                placeholder="Ex: 50,00" value="{{ old('amount') }}" style="width:100%;">
                             <div class="text" style="font-size: 12px; margin-top: 6px;">
                                 Será validado se você possui saldo antes de enviar.
                             </div>
@@ -108,11 +116,39 @@
                         <button class="btn btn-primary" type="submit">Transferir</button>
                     </form>
                 </div>
-            </aside>
-        </div>
 
-        {{-- Extrato --}}
-        <section class="card" style="margin-top: 14px;">
+                {{-- Retirada --}}
+                <div
+                    style="flex:1; min-width: 260px; padding:14px; border-radius:14px; border:1px solid #2a2a2f; background:#0f0f12;">
+                    <h3 style="margin:0 0 10px; font-size: 14px; font-weight: 800;">Retirada</h3>
+
+                    <form method="POST" action="{{ route('wallet.withdraw') }}">
+                        @csrf
+
+                        <div class="field">
+                            <label for="withdraw_amount">Valor (R$)</label>
+                            <input id="withdraw_amount" name="amount" type="text" inputmode="decimal"
+                                placeholder="Ex: 80,00" value="{{ old('amount') }}" style="width:100%;">
+                            <div class="text" style="font-size: 12px; margin-top: 6px;">
+                                O valor será subtraído do seu saldo.
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="withdraw_description">Descrição (opcional)</label>
+                            <input id="withdraw_description" name="description" type="text"
+                                placeholder="Ex: retirada para despesas" value="{{ old('description') }}"
+                                style="width:100%;">
+                        </div>
+
+                        <button class="btn btn-primary" type="submit">Retirar</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        {{-- Extrato (mantido como está) --}}
+        <section class="card" style="margin-top: 0;">
             <div style="display:flex; align-items:flex-end; justify-content:space-between; gap: 12px;">
                 <div>
                     <h2 class="title">Extrato</h2>
@@ -141,18 +177,17 @@
                     <tbody>
                         @forelse(($transactions ?? []) as $tx)
                             @php
-                                // Normaliza enum/string
                                 $rawType = is_object($tx->type ?? null) ? ($tx->type->value ?? (string) $tx->type) : (string) ($tx->type ?? '');
                                 $rawStatus = is_object($tx->status ?? null) ? ($tx->status->value ?? (string) $tx->status) : (string) ($tx->status ?? '');
 
                                 $type = strtolower($rawType);
                                 $status = strtolower($rawStatus);
 
-                                // Labels pt-BR (apenas UI)
                                 $typeLabels = [
                                     'deposit' => 'Depósito',
                                     'transfer' => 'Transferência',
                                     'reversal' => 'Estorno',
+                                    'withdraw' => 'Retirada',
                                 ];
 
                                 $statusLabels = [
@@ -165,11 +200,7 @@
                                 $statusLabel = $statusLabels[$status] ?? strtoupper($rawStatus ?: '—');
 
                                 $amount = (int) ($tx->amount_cents ?? 0);
-
-                                // Revertido se status = reversed ou se essa linha é uma reversão (reversal_of_id preenchido)
                                 $isReversed = $status === 'reversed' || !empty($tx->reversal_of_id);
-
-                                // Pode reverter apenas se for depósito ou transferência e estiver postado e ainda não revertido
                                 $canReverse = !$isReversed && in_array($type, ['deposit', 'transfer'], true) && $status === 'posted';
                             @endphp
 
@@ -196,7 +227,6 @@
 
                                 <td style="padding: 10px 12px; font-size: 13px;">
                                     @php
-                                        // Badge por status (usando valor normalizado)
                                         $badgeBg = $status === 'posted' ? '#0f2a16' : ($status === 'reversed' ? '#2a0f13' : '#202028');
                                         $badgeBd = $status === 'posted' ? '#1f6b2e' : ($status === 'reversed' ? '#6b1a24' : '#2a2a2f');
                                         $badgeTx = $status === 'posted' ? '#b7ffd0' : ($status === 'reversed' ? '#ffb4be' : '#d6d6dd');
@@ -232,12 +262,12 @@
                 </table>
             </div>
 
-            {{-- Paginação (se você usar paginate) --}}
             @if (!empty($transactions) && method_exists($transactions, 'links'))
                 <div style="margin-top: 12px;">
                     {{ $transactions->links('dashboard.wallet.pagination') }}
                 </div>
             @endif
         </section>
+
     </div>
 @endsection

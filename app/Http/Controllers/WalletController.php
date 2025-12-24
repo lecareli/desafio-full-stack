@@ -9,11 +9,13 @@ use App\Exceptions\Wallet\RecipientNotFoundException;
 use App\Exceptions\Wallet\TransactionNotFoundException;
 use App\Http\Requests\Wallet\DepositRequest;
 use App\Http\Requests\Wallet\TransferRequest;
+use App\Http\Requests\Wallet\WithdrawRequest;
 use App\Models\Transaction;
 use App\Services\Wallet\DepositService;
 use App\Services\Wallet\ReverseTransactionService;
 use App\Services\Wallet\TransferService;
 use App\Services\Wallet\WalletService;
+use App\Services\Wallet\WithdrawService;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
 use Throwable;
@@ -24,7 +26,8 @@ class WalletController extends Controller
         protected WalletService $walletService,
         protected DepositService $depositService,
         protected TransferService $transferService,
-        protected ReverseTransactionService $reverseService
+        protected ReverseTransactionService $reverseService,
+        protected WithdrawService $withdrawService
     ) {}
 
     public function index()
@@ -143,6 +146,38 @@ class WalletController extends Controller
         catch(Throwable $e)
         {
             return back()->with('error', 'Não foi possível reverter a transação. Tente novamente.');
+        }
+    }
+
+    public function withdraw(WithdrawRequest $request): RedirectResponse
+    {
+        try
+        {
+            $this->withdrawService->withdraw(
+                $request->user(),
+                $request->input('amount'),
+                $request->input('description')
+            );
+
+            return back()->with('success', 'Retirada realizada com sucesso.');
+        }
+        catch(InsufficientBalanceException $e)
+        {
+            return back()
+                ->withErrors(['amount' => $e->getMessage()])
+                ->withInput();
+        }
+        catch(InvalidArgumentException $e)
+        {
+            return back()
+                ->withErrors(['amount' => $e->getMessage()])
+                ->withInput();
+        }
+        catch(Throwable $e)
+        {
+            return back()
+                ->with('error', 'Não foi possível realizar a retirada. Tente novamente.')
+                ->withInput();
         }
     }
 }

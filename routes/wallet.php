@@ -8,5 +8,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/wallet/deposit', [WalletController::class, 'deposit'])->name('wallet.deposit');
     Route::post('/wallet/transfer', [WalletController::class, 'transfer'])->name('wallet.transfer');
     Route::post('/wallet/transactions/{transaction}/reverse', [WalletController::class, 'reverse'])->name('wallet.transactions.reverse');
+    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw'])->name('wallet.withdraw');
 });
 
