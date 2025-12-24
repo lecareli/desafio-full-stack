@@ -1,59 +1,162 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Wallet App (Desafio Full Stack)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicação web (Laravel 12) de carteira digital com autenticação e extrato de transações.
 
-## About Laravel
+## Visão geral
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+O sistema permite que usuários:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Criem conta e façam login/logout.
+- Visualizem o saldo da carteira e o extrato de movimentações.
+- Realizem **depósito**, **transferência** e **retirada**.
+- Realizem **estorno** de **depósitos** e **transferências**, respeitando regras de autorização e saldo.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Todas as operações relevantes geram registros em **transactions** e logs em **audit_logs**/**error_logs** para auditoria e rastreabilidade.
 
-## Learning Laravel
+## Modelo de dados (domínio)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **User** (`users`)
+  - `id` é UUID.
+  - `is_active` controla se o usuário pode logar.
+- **Wallet** (`wallets`)
+  - 1 carteira por usuário (`user_id`).
+  - `balance_cents` armazena saldo em centavos (inteiro) para evitar problemas de ponto flutuante.
+  - `currency` (default `BRL`).
+- **Transaction** (`transactions`)
+  - `type`: `DEPOSIT`, `TRANSFER`, `WITHDRAW`, `REVERSAL` (`app/Enums/TransactionTypeEnum.php`).
+  - `status`: `POSTED`, `REVERSED`, `FAILED` (`app/Enums/TransactionStatusEnum.php`).
+  - `amount_cents` armazena valor em centavos (inteiro).
+  - `from_wallet_id` e `to_wallet_id` indicam o fluxo do dinheiro (podem ser `null` em depósito/retirada).
+  - `reversal_of_id` referencia a transação original quando `type=REVERSAL`.
+- **AuditLog** (`audit_logs`)
+  - Loga eventos de negócio (ex.: `deposit_posted`, `transfer_posted`, `logout`, etc).
+  - Guarda contexto de request (ip, user-agent, request_id).
+- **ErrorLog** (`error_logs`)
+  - Loga erros/exceções com contexto, além de dados do request.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Fluxos e regras de negócio
 
-## Laravel Sponsors
+### 1) Autenticação
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Registro** cria o usuário, autentica a sessão e escreve `audit_logs.action=register`.
+- **Login**
+  - Se credenciais inválidas: lança `AuthenticationException` e escreve `error_logs` com nível `WARNING`.
+  - Se usuário inativo (`is_active=false`): registra `audit_logs.action=login_denied_inactive`, força logout e lança `AuthenticationException`.
+- **Rotas de carteira** são protegidas por `auth` e guests são redirecionados para `auth.view.login` (configurado em `bootstrap/app.php`).
 
-### Premium Partners
+### 2) Carteira (Wallet)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+O sistema garante a existência de uma carteira por usuário via `WalletService::getOrCreateWallet()`.
 
-## Contributing
+### 3) Depósito
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Implementação: `app/Services/Wallet/DepositService.php`.
 
-## Code of Conduct
+- O valor recebido do formulário é convertido para centavos (aceita formatos como `150`, `150,00`, `1.234,56`, `R$ 50,00`).
+- Atualiza o saldo da carteira dentro de transação de banco (`DB::transaction`) com `lockForUpdate()` para evitar condições de corrida.
+- Cria uma `transactions` com `type=DEPOSIT` e `status=POSTED`.
+- Cria um log em `audit_logs` (`action=deposit_posted`).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 4) Transferência
 
-## Security Vulnerabilities
+Implementação: `app/Services/Wallet/TransferService.php`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Regras:
+  - Destinatário deve existir e não pode ser o próprio usuário.
+  - Remetente deve possuir saldo suficiente.
+- Para evitar deadlock/conflito:
+  - As duas wallets são travadas (`lockForUpdate`) em ordem consistente (por `id`).
+- Cria uma `transactions` com `type=TRANSFER` e `status=POSTED`.
+- Cria um log em `audit_logs` (`action=transfer_posted`).
 
-## License
+### 5) Retirada
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Implementação: `app/Services/Wallet/WithdrawService.php`.
+
+- Regras:
+  - Usuário deve possuir saldo suficiente.
+- Atualiza o saldo com `lockForUpdate()` dentro de `DB::transaction`.
+- Cria uma `transactions` com `type=WITHDRAW` e `status=POSTED`.
+- Cria um log em `audit_logs` (`action=withdraw_posted`).
+
+### 6) Estorno (reversão)
+
+Implementação: `app/Services/Wallet/ReverseTransactionService.php`.
+
+- Só permite estornar transações `DEPOSIT` ou `TRANSFER`.
+- Apenas o usuário que criou a transação (`created_by`) pode estornar.
+- Se a transação original já estiver `REVERSED`, lança `AlreadyReversedException`.
+- **Idempotência:** se já existir uma transação `REVERSAL` com `reversal_of_id` apontando para a original, ela é retornada.
+- No estorno:
+  - É criada uma nova transação `REVERSAL` (com `reversal_of_id` preenchido).
+  - A transação original é marcada como `REVERSED`.
+  - Os saldos são ajustados (depósito: subtrai da carteira; transferência: devolve do destinatário para o remetente).
+
+## Interface e rotas
+
+Arquivos de rotas:
+
+- `routes/auth.php`
+- `routes/wallet.php`
+
+Rotas principais (web):
+
+- `GET /` → tela de login
+- `GET /register` / `POST /register`
+- `GET /login` / `POST /login`
+- `POST /logout`
+- `GET /wallet` (saldo + extrato)
+- `POST /wallet/deposit`
+- `POST /wallet/transfer`
+- `POST /wallet/withdraw`
+- `POST /wallet/transactions/{transaction}/reverse`
+
+## Como rodar localmente
+
+### Pré-requisitos
+
+- PHP 8.4+
+- Composer
+- Node.js (para Vite/Tailwind, se você for mexer em assets)
+- PostgreSQL (config padrão em `.env`)
+
+### Setup rápido
+
+1) Instale dependências e rode migrations:
+
+```bash
+composer install
+php artisan migrate
+```
+
+2) Rode o servidor:
+
+```bash
+php artisan serve
+```
+
+Opcional: script de desenvolvimento (server + queue + logs + vite):
+
+```bash
+composer run dev
+```
+
+## Testes
+
+Este projeto usa **Pest**.
+
+```bash
+php artisan test
+```
+
+Cobertura atual inclui:
+
+- Unit tests para services (`tests/Unit/Services/*`)
+- Feature tests para rotas (`tests/Feature/Auth/*`, `tests/Feature/Wallet/*`)
+
+## Estrutura (pontos de entrada)
+
+- Controllers: `app/Http/Controllers/Auth/AuthController.php`, `app/Http/Controllers/WalletController.php`
+- Validação: `app/Http/Requests/Auth/*`, `app/Http/Requests/Wallet/*`
+- Services: `app/Services/Auth/AuthService.php`, `app/Services/Wallet/*`, `app/Services/Logging/*`
+- Models: `app/Models/*`
