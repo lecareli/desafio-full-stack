@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Wallet\AlreadyReversedException;
 use App\Exceptions\Wallet\InsufficientBalanceException;
+use App\Exceptions\Wallet\NotAllowedToReverseException;
 use App\Exceptions\Wallet\RecipientNotFoundException;
+use App\Exceptions\Wallet\TransactionNotFoundException;
 use App\Http\Requests\Wallet\DepositRequest;
 use App\Http\Requests\Wallet\TransferRequest;
 use App\Models\Transaction;
 use App\Services\Wallet\DepositService;
+use App\Services\Wallet\ReverseTransactionService;
 use App\Services\Wallet\TransferService;
 use App\Services\Wallet\WalletService;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +24,7 @@ class WalletController extends Controller
         protected WalletService $walletService,
         protected DepositService $depositService,
         protected TransferService $transferService,
+        protected ReverseTransactionService $reverseService
     ) {}
 
     public function index()
@@ -113,6 +118,31 @@ class WalletController extends Controller
             return back()
                 ->with('error', 'Não foi possível realizar a transferência. Tente novamente.')
                 ->withInput();
+        }
+    }
+
+    public function reverse(string $transactionId): RedirectResponse
+    {
+        try
+        {
+            $this->reverseService->reverse(request()->user(), $transactionId);
+            return back()->with('success', 'reversão realizada com sucesso.');
+        }
+        catch(AlreadyReversedException $e)
+        {
+            return back()->with('success', 'Esta transação já estava revertida.');
+        }
+        catch(TransactionNotFoundException|NotAllowedToReverseException $e)
+        {
+            return back()->with('error', $e->getMessage());
+        }
+        catch(InsufficientBalanceException $e)
+        {
+            return back()->with('error', $e->getMessage());
+        }
+        catch(Throwable $e)
+        {
+            return back()->with('error', 'Não foi possível reverter a transação. Tente novamente.');
         }
     }
 }

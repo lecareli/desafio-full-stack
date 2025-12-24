@@ -43,7 +43,6 @@
                     <div class="text" style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
                         <span>Saldo atual</span>
 
-                        {{-- Espera $wallet->balance_cents e $wallet->currency --}}
                         <strong style="font-size: 18px; color:#fff;">
                             {{ $walletCurrency ?? 'BRL' }}
                             {{ number_format(($walletBalanceCents ?? 0) / 100, 2, ',', '.') }}
@@ -122,7 +121,7 @@
 
                 <form method="GET" action="{{ route('wallet.index') }}" style="display:flex; gap: 8px; align-items:center;">
                     <input name="q" type="text" value="{{ request('q') }}" placeholder="Buscar (descrição/tipo)"
-                        style="max-width: 220px;">
+                        style="width: 260px;">
                     <button class="btn" type="submit">Filtrar</button>
                 </form>
             </div>
@@ -142,11 +141,20 @@
                     <tbody>
                         @forelse(($transactions ?? []) as $tx)
                             @php
-                                $type = is_object($tx->type ?? null) ? $tx->type->value : ($tx->type ?? '');
-                                $status = is_object($tx->status ?? null) ? $tx->status->value : ($tx->status ?? '');
+                                // Normaliza enum/string
+                                $rawType = is_object($tx->type ?? null) ? ($tx->type->value ?? (string) $tx->type) : (string) ($tx->type ?? '');
+                                $rawStatus = is_object($tx->status ?? null) ? ($tx->status->value ?? (string) $tx->status) : (string) ($tx->status ?? '');
+
+                                $type = strtolower($rawType);
+                                $status = strtolower($rawStatus);
+
                                 $amount = (int) ($tx->amount_cents ?? 0);
-                                $isReversed = ($status === 'reversed') || !empty($tx->reversal_of_id);
-                                $canReverse = !$isReversed && in_array($type, ['deposit', 'transfer'], true);
+
+                                // Revertido se status = reversed ou se essa linha é uma reversão (reversal_of_id preenchido)
+                                $isReversed = $status === 'reversed' || !empty($tx->reversal_of_id);
+
+                                // Pode reverter apenas se for depósito ou transferência e estiver postado e ainda não revertido
+                                $canReverse = !$isReversed && in_array($type, ['deposit', 'transfer'], true) && $status === 'posted';
                             @endphp
 
                             <tr style="border-top: 1px solid #2a2a2f;">
@@ -157,7 +165,7 @@
                                 <td style="padding: 10px 12px; font-size: 13px; color:#d6d6dd;">
                                     <span
                                         style="padding: 4px 8px; border-radius: 999px; border: 1px solid #2a2a2f; background:#131316;">
-                                        {{ strtoupper($type ?: '—') }}
+                                        {{ strtoupper($rawType ?: '—') }}
                                     </span>
                                 </td>
 
@@ -178,16 +186,19 @@
                                     @endphp
                                     <span
                                         style="padding: 4px 8px; border-radius: 999px; border: 1px solid {{ $badgeBd }}; background: {{ $badgeBg }}; color: {{ $badgeTx }};">
-                                        {{ strtoupper($status ?: '—') }}
+                                        {{ strtoupper($rawStatus ?: '—') }}
                                     </span>
                                 </td>
 
                                 <td style="padding: 10px 12px; text-align:right;">
                                     @if ($canReverse)
                                         <form method="POST" action="{{ route('wallet.transactions.reverse', $tx->id) }}"
-                                            style="display:inline;">
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Confirmar reversão desta transação?');">
                                             @csrf
-                                            <button class="btn" type="submit" style="padding: 8px 10px;">Reverter</button>
+                                            <button class="btn" type="submit" style="padding: 8px 10px;">
+                                                Reverter
+                                            </button>
                                         </form>
                                     @else
                                         <span class="text" style="font-size: 12px;">—</span>
