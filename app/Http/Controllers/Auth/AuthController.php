@@ -29,7 +29,7 @@ class AuthController extends Controller
         $this->service->register($request->validated());
         $request->session()->regenerate();
 
-        return redirect()->route('home');
+        return redirect()->route('wallet.index');
     }
 
     public function login(LoginRequest $request)
@@ -44,7 +44,7 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->intended(route('home'));
+            return redirect()->intended(route('wallet.index'));
         } catch (AuthenticationException $e) {
             return back()
                 ->withErrors(['email' => $e->getMessage()])
