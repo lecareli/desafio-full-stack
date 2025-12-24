@@ -14,22 +14,22 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Services\Logging\AuditLogger;
 use App\Services\Logging\ErrorLogger;
+use BackedEnum;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Throwable;
+use UnitEnum;
 
 class ReverseTransactionService
 {
     public function __construct(
         protected AuditLogger $audit,
         protected ErrorLogger $error,
-    ) {
-    }
+    ) {}
 
     public function reverse(User $actor, string $transactionId): Transaction
     {
-        try
-        {
+        try {
             return DB::transaction(function () use ($actor, $transactionId) {
                 $original = $this->getOriginalForUpdate($transactionId);
 
@@ -51,9 +51,7 @@ class ReverseTransactionService
                 // Segurança extra (não deveria chegar aqui)
                 throw new InvalidArgumentException('Apenas depósitos e transferências podem ser revertidos.');
             });
-        }
-        catch (Throwable $e)
-        {
+        } catch (Throwable $e) {
             $this->logError($e, $actor, $transactionId);
             throw $e;
         }
@@ -70,7 +68,7 @@ class ReverseTransactionService
             ->lockForUpdate()
             ->first();
 
-        if (!$original) {
+        if (! $original) {
             throw new TransactionNotFoundException('Transação não encontrada.');
         }
 
@@ -93,7 +91,7 @@ class ReverseTransactionService
             $this->enumToUpper(TransactionTypeEnum::TRANSFER),
         ];
 
-        if (!in_array($type, $allowed, true)) {
+        if (! in_array($type, $allowed, true)) {
             throw new InvalidArgumentException('Apenas depósitos e transferências podem ser revertidos.');
         }
     }
@@ -361,11 +359,11 @@ class ReverseTransactionService
 
     private function enumToString(mixed $value): string
     {
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             return (string) $value->value;
         }
 
-        if ($value instanceof \UnitEnum) {
+        if ($value instanceof UnitEnum) {
             return (string) $value->name;
         }
 

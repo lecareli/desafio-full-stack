@@ -148,6 +148,22 @@
                                 $type = strtolower($rawType);
                                 $status = strtolower($rawStatus);
 
+                                // Labels pt-BR (apenas UI)
+                                $typeLabels = [
+                                    'deposit' => 'Depósito',
+                                    'transfer' => 'Transferência',
+                                    'reversal' => 'Estorno',
+                                ];
+
+                                $statusLabels = [
+                                    'posted' => 'Concluída',
+                                    'reversed' => 'Estornada',
+                                    'failed' => 'Falhou',
+                                ];
+
+                                $typeLabel = $typeLabels[$type] ?? strtoupper($rawType ?: '—');
+                                $statusLabel = $statusLabels[$status] ?? strtoupper($rawStatus ?: '—');
+
                                 $amount = (int) ($tx->amount_cents ?? 0);
 
                                 // Revertido se status = reversed ou se essa linha é uma reversão (reversal_of_id preenchido)
@@ -165,7 +181,7 @@
                                 <td style="padding: 10px 12px; font-size: 13px; color:#d6d6dd;">
                                     <span
                                         style="padding: 4px 8px; border-radius: 999px; border: 1px solid #2a2a2f; background:#131316;">
-                                        {{ strtoupper($rawType ?: '—') }}
+                                        {{ $typeLabel }}
                                     </span>
                                 </td>
 
@@ -180,24 +196,24 @@
 
                                 <td style="padding: 10px 12px; font-size: 13px;">
                                     @php
+                                        // Badge por status (usando valor normalizado)
                                         $badgeBg = $status === 'posted' ? '#0f2a16' : ($status === 'reversed' ? '#2a0f13' : '#202028');
                                         $badgeBd = $status === 'posted' ? '#1f6b2e' : ($status === 'reversed' ? '#6b1a24' : '#2a2a2f');
                                         $badgeTx = $status === 'posted' ? '#b7ffd0' : ($status === 'reversed' ? '#ffb4be' : '#d6d6dd');
                                     @endphp
                                     <span
                                         style="padding: 4px 8px; border-radius: 999px; border: 1px solid {{ $badgeBd }}; background: {{ $badgeBg }}; color: {{ $badgeTx }};">
-                                        {{ strtoupper($rawStatus ?: '—') }}
+                                        {{ $statusLabel }}
                                     </span>
                                 </td>
 
                                 <td style="padding: 10px 12px; text-align:right;">
                                     @if ($canReverse)
                                         <form method="POST" action="{{ route('wallet.transactions.reverse', $tx->id) }}"
-                                            style="display:inline;"
-                                            onsubmit="return confirm('Confirmar reversão desta transação?');">
+                                            style="display:inline;" onsubmit="return confirm('Confirmar estorno desta operação?');">
                                             @csrf
                                             <button class="btn" type="submit" style="padding: 8px 10px;">
-                                                Reverter
+                                                Estornar
                                             </button>
                                         </form>
                                     @else
@@ -219,7 +235,7 @@
             {{-- Paginação (se você usar paginate) --}}
             @if (!empty($transactions) && method_exists($transactions, 'links'))
                 <div style="margin-top: 12px;">
-                    {{ $transactions->links() }}
+                    {{ $transactions->links('dashboard.wallet.pagination') }}
                 </div>
             @endif
         </section>
