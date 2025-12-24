@@ -49,17 +49,17 @@ class DepositService
                 ]);
 
                 $tx = Transaction::create([
-                    'type' => TransactionTypeEnum::DEPOSIT,
-                    'status' => TransactionStatusEnum::POSTED,
-                    'amount_cents' => $amountCents,
-                    'from_wallet_id' => null,
-                    'to_wallet_id' => $wallet->id,
-                    'reversal_of_id' => null,
-                    'created_by' => $actor->id,
-                    'description' => $description ?: 'Depósito',
+                    'type'              => TransactionTypeEnum::DEPOSIT,
+                    'status'            => TransactionStatusEnum::POSTED,
+                    'amount_cents'      => $amountCents,
+                    'from_wallet_id'    => null,
+                    'to_wallet_id'      => $wallet->id,
+                    'reversal_of_id'    => null,
+                    'created_by'        => $actor->id,
+                    'description'       => $description ?: 'Depósito',
                     'meta' => [
-                        'raw_amount' => $rawAmount,
-                        'currency' => $wallet->currency,
+                        'raw_amount'    => $rawAmount,
+                        'currency'      => $wallet->currency,
                     ],
                 ]);
 
@@ -68,13 +68,13 @@ class DepositService
                     'transaction',
                     (string) $tx->id,
                     [
-                        'wallet_id' => (string) $wallet->id,
+                        'wallet_id'     => (string) $wallet->id,
                         'balance_cents' => $before,
                     ],
                     [
-                        'wallet_id' => (string) $wallet->id,
+                        'wallet_id'     => (string) $wallet->id,
                         'balance_cents' => $after,
-                        'amount_cents' => $amountCents,
+                        'amount_cents'  => $amountCents,
                         'transaction_id' => (string) $tx->id,
                     ],
                     'Depósito realizado com sucesso',
@@ -90,10 +90,10 @@ class DepositService
                 $e,
                 ErrorLevelEnum::ERROR,
                 [
-                    'action' => 'deposit',
-                    'user_id' => (string) $actor->id,
-                    'amount_raw' => $rawAmount,
-                    'amount_cents' => $amountCents ?? null,
+                    'action'        => 'deposit',
+                    'user_id'       => (string) $actor->id,
+                    'amount_raw'    => $rawAmount,
+                    'amount_cents'  => $amountCents ?? null,
                 ],
                 (string) $actor->id,
             );

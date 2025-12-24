@@ -141,59 +141,59 @@
                     </thead>
                     <tbody>
                         @forelse(($transactions ?? []) as $tx)
-                                            @php
-                                                $type = is_object($tx->type ?? null) ? $tx->type->value : ($tx->type ?? '');
-                                                $status = is_object($tx->status ?? null) ? $tx->status->value : ($tx->status ?? '');
-                                                $amount = (int) ($tx->amount_cents ?? 0);
-                                                $isReversed = ($status === 'reversed') || !empty($tx->reversal_of_id);
-                                                $canReverse = !$isReversed && in_array($type, ['deposit', 'transfer'], true);
-                                            @endphp
+                            @php
+                                $type = is_object($tx->type ?? null) ? $tx->type->value : ($tx->type ?? '');
+                                $status = is_object($tx->status ?? null) ? $tx->status->value : ($tx->status ?? '');
+                                $amount = (int) ($tx->amount_cents ?? 0);
+                                $isReversed = ($status === 'reversed') || !empty($tx->reversal_of_id);
+                                $canReverse = !$isReversed && in_array($type, ['deposit', 'transfer'], true);
+                            @endphp
 
-                                            <tr style="border-top: 1px solid #2a2a2f;">
-                                                <td style="padding: 10px 12px; font-size: 13px; color:#d6d6dd;">
-                                                    {{ optional($tx->created_at)->format('d/m/Y H:i') ?? '—' }}
-                                                </td>
+                            <tr style="border-top: 1px solid #2a2a2f;">
+                                <td style="padding: 10px 12px; font-size: 13px; color:#d6d6dd;">
+                                    {{ optional($tx->created_at)->format('d/m/Y H:i') ?? '—' }}
+                                </td>
 
-                                                <td style="padding: 10px 12px; font-size: 13px; color:#d6d6dd;">
-                                                    <span
-                                                        style="padding: 4px 8px; border-radius: 999px; border: 1px solid #2a2a2f; background:#131316;">
-                                                        {{ strtoupper($type ?: '—') }}
-                                                    </span>
-                                                </td>
+                                <td style="padding: 10px 12px; font-size: 13px; color:#d6d6dd;">
+                                    <span
+                                        style="padding: 4px 8px; border-radius: 999px; border: 1px solid #2a2a2f; background:#131316;">
+                                        {{ strtoupper($type ?: '—') }}
+                                    </span>
+                                </td>
 
-                                                <td style="padding: 10px 12px; font-size: 13px; color:#b8b8c0;">
-                                                    {{ $tx->description ?? '—' }}
-                                                </td>
+                                <td style="padding: 10px 12px; font-size: 13px; color:#b8b8c0;">
+                                    {{ $tx->description ?? '—' }}
+                                </td>
 
-                                                <td style="padding: 10px 12px; text-align:right; font-size: 13px; color:#fff;">
-                                                    {{ $walletCurrency ?? 'BRL' }}
-                                                    {{ number_format($amount / 100, 2, ',', '.') }}
-                                                </td>
+                                <td style="padding: 10px 12px; text-align:right; font-size: 13px; color:#fff;">
+                                    {{ $walletCurrency ?? 'BRL' }}
+                                    {{ number_format($amount / 100, 2, ',', '.') }}
+                                </td>
 
-                                                <td style="padding: 10px 12px; font-size: 13px;">
-                                                    @php
-                                                        $badgeBg = $status === 'posted' ? '#0f2a16' : ($status === 'reversed' ? '#2a0f13' : '#202028');
-                                                        $badgeBd = $status === 'posted' ? '#1f6b2e' : ($status === 'reversed' ? '#6b1a24' : '#2a2a2f');
-                                                        $badgeTx = $status === 'posted' ? '#b7ffd0' : ($status === 'reversed' ? '#ffb4be' : '#d6d6dd');
-                                                    @endphp
-                             <span
-                                                        style="padding: 4px 8px; border-radius: 999px; border: 1px solid {{ $badgeBd }}; background: {{ $badgeBg }}; color: {{ $badgeTx }};">
-                                                        {{ strtoupper($status ?: '—') }}
-                                                    </span>
-                                                </td>
+                                <td style="padding: 10px 12px; font-size: 13px;">
+                                    @php
+                                        $badgeBg = $status === 'posted' ? '#0f2a16' : ($status === 'reversed' ? '#2a0f13' : '#202028');
+                                        $badgeBd = $status === 'posted' ? '#1f6b2e' : ($status === 'reversed' ? '#6b1a24' : '#2a2a2f');
+                                        $badgeTx = $status === 'posted' ? '#b7ffd0' : ($status === 'reversed' ? '#ffb4be' : '#d6d6dd');
+                                    @endphp
+                                    <span
+                                        style="padding: 4px 8px; border-radius: 999px; border: 1px solid {{ $badgeBd }}; background: {{ $badgeBg }}; color: {{ $badgeTx }};">
+                                        {{ strtoupper($status ?: '—') }}
+                                    </span>
+                                </td>
 
-                                                <td style="padding: 10px 12px; text-align:right;">
-                                                    @if ($canReverse)
-                                                        <form method="POST" action="{{ route('wallet.transactions.reverse', $tx->id) }}"
-                                                            style="display:inline;">
-                                                            @csrf
-                                                            <button class="btn" type="submit" style="padding: 8px 10px;">Reverter</button>
-                                                        </form>
-                                                    @else
-                                                        <span class="text" style="font-size: 12px;">—</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
+                                <td style="padding: 10px 12px; text-align:right;">
+                                    @if ($canReverse)
+                                        <form method="POST" action="{{ route('wallet.transactions.reverse', $tx->id) }}"
+                                            style="display:inline;">
+                                            @csrf
+                                            <button class="btn" type="submit" style="padding: 8px 10px;">Reverter</button>
+                                        </form>
+                                    @else
+                                        <span class="text" style="font-size: 12px;">—</span>
+                                    @endif
+                                </td>
+                            </tr>
                         @empty
                             <tr>
                                 <td colspan="6" style="padding: 14px 12px; color:#b8b8c0; font-size: 13px;">
